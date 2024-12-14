@@ -25,8 +25,12 @@
   <!-- WebAssembly -->
   <section>
     <h2>3. WebAssembly: Обчислення у браузері</h2>
+    <input type="text" id="number1">
+    <input type="text" id="number2">
     <button id="runWasm">Виконати обчислення в WebAssembly</button>
     <pre id="wasmOutput">Результат WebAssembly з'явиться тут...</pre>
+
+    <script src="./simple.js"></script>
   </section>
 
   <script>
@@ -51,15 +55,21 @@
     startVideoStream();
 
     // WebAssembly
-    async function runWebAssembly() {
-        const response = await fetch('simple.wasm');
-        const buffer = await response.arrayBuffer();
-        const wasmModule = await WebAssembly.instantiate(buffer, {});  // Порожній об'єкт для імпортів
-        const result = wasmModule.instance.exports.addNumbers(5, 10);
-        document.getElementById('wasmOutput').textContent = `Результат: ${result}`;
-    }
+    let api;
+    Module.onRuntimeInitialized = async _ => {
+        api = {
+            calculate: Module.cwrap('addNumbers', 'number', ['number1', 'number2']),
+        };
+    };
 
-    document.getElementById('runWasm').addEventListener('click', runWebAssembly);
+    const btn = document.getElementById('runWasm');
+    btn.addEventListener('click', () => {
+        const inputNumber1 = document.getElementById('number1').value;
+        const inputNumber2 = document.getElementById('number2').value;
+        const result = document.getElementById('wasmOutput');
+        result.innerHTML = api.calculate(Number(inputNumber1), Number(inputNumber2));
+        console.log(result);
+    });
   </script>
 </body>
 </html>
